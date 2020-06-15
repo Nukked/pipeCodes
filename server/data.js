@@ -1,14 +1,17 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-// this will be our data base's data structure 
+// Estrutura da Base de dados 
 const DataSchema = new Schema(
   {
     id: Number,
-    message: String
+    name: String,
+    email: String,
+    observations: String,
+    date: String
   },
   { timestamps: true }
 );
 
-// export the new Schema so we could modify it using Node.js
+// Exportar o esquema para ser usado no server (Node.js)
 module.exports = mongoose.model("Data", DataSchema);

@@ -10,18 +10,18 @@ const app = express();
 app.use(cors());
 const router = express.Router();
 
-// this is our MongoDB database
+// Link para a base de dados (falta encriptar a password)
 const dbRoute =
   'mongodb+srv://admin:admin@cluster0-nyswp.mongodb.net/Cluster0?retryWrites=true&w=majority';
 
-// connects our back end code with the database
+// connecta o backend com a base de dados
 mongoose.connect(dbRoute, { useNewUrlParser: true });
 
 let db = mongoose.connection;
 
 db.once('open', () => console.log('connected to the database'));
 
-// checks if connection with the database is successful
+// verificar se a conexão teve sucesso
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 // (optional) only made for logging and
@@ -30,49 +30,49 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(logger('dev'));
 
-// this is our get method
-// this method fetches all available data in our database
-router.get('/getData', (req, res) => {
+// Metodo getData
+// Metodo para retirar todos os dados que estiverem na base de dados
+router.get('/questions', (req, res) => {
   Data.find((err, data) => {
     if (err) return res.json({ success: false, error: err });
     return res.json({ success: true, data: data });
   });
 });
 
-// this is our update method
-// this method overwrites existing data in our database
-router.post('/updateData', (req, res) => {
-  const { id, update } = req.body;
-  Data.findByIdAndUpdate(id, update, (err) => {
+// http://localhost:3001/questions/?id=5ee613956fe3b0028eac0d0d (ex.)
+app.get('/questions', async function (req, res) {
+  let id = req.query.id;
+  Data.findOne({_id: id }, function(err, document) {
     if (err) return res.json({ success: false, error: err });
-    return res.json({ success: true });
+    return res.json({ success: true, name: document.name });
+  });
+});
+// http://localhost:3001/questions/5ee613956fe3b0028eac0d0d (ex.)
+app.get('/questions/:id', async function (req, res) {
+  let id = req.params.id;
+  Data.findOne({_id: id }, function(err, document) {
+    if (err) return res.json({ success: false, error: err });
+    return res.json({ success: true, name: document.name });
   });
 });
 
-// this is our delete method
-// this method removes existing data in our database
-router.delete('/deleteData', (req, res) => {
-  const { id } = req.body;
-  Data.findByIdAndRemove(id, (err) => {
-    if (err) return res.send(err);
-    return res.json({ success: true });
-  });
-});
-
-// this is our create methid
-// this method adds new data in our database
-router.post('/putData', (req, res) => {
+// Metodo post
+// Metodo para guardar um novo registo na base de dados
+router.post('/questions', (req, res) => {
   let data = new Data();
 
-  const { id, message } = req.body;
-
-  if ((!id && id !== 0) || !message) {
+  const { id, name, email, observations, date } = req.body;
+  // Validações feitas no frontend, ver se faz sentido validar aqui tambem
+  if ((!id && id !== 0)) {
     return res.json({
       success: false,
       error: 'INVALID INPUTS',
     });
   }
-  data.message = message;
+  data.name = name;
+  data.email = email;
+  data.observations = observations;
+  data.date = date;
   data.id = id;
   data.save((err) => {
     if (err) return res.json({ success: false, error: err });
@@ -80,8 +80,8 @@ router.post('/putData', (req, res) => {
   });
 });
 
-// append /api for our http requests
+// Adiciona /api para requests http
 app.use('/api', router);
 
-// launch our backend into a port
+// iniciar o backend na porta 3001
 app.listen(API_PORT, () => console.log(`LISTENING ON PORT ${API_PORT}`));
